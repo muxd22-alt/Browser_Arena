@@ -45,13 +45,58 @@ generates seed data on first run, so a fresh clone needs no setup.
 | JS evaluator | `sdk/js/s1.js` | done |
 | Unity evaluator | `sdk/unity/S1.cs` | done |
 | Godot evaluator | `sdk/godot/s1.gd` | done |
-| Reference game | `games/arena/` | done, 3v3 with cover and an objective |
+| Reference game | `games/arena/` | done, 3v3 capture the flag |
 | Imitation (ridge/OLS) | `trainer/imitate.js` | done |
 | Self-play (ES) | `trainer/evolve.js` | done |
 | League (Elo + Wilson gate) | `trainer/league.js` | done |
 | Difficulty dial | `sdk/js/s1.js` + per-engine ports | done |
 | Showcase page | `docs/` | done, five sections |
 | Hourly pipeline | `.github/workflows/evolve.yml` | done |
+
+## The reference game
+
+Station Run: 3v3 capture the flag in a derelict station. A fixed,
+hand-authored map — three lanes, a central pillar, two base bumpers that seal
+the centre line so every flag run is also a flank decision. Real projectiles,
+no friendly fire, magazines, shields, and a waypoint graph for navigation.
+
+The map is fixed on purpose. A trainer that trains on one map and ships on
+another learns the wrong thing, and a visitor arriving at the showcase should
+see the same arena every time.
+
+### Four bugs worth naming
+
+The sim fought back, and every one of these looked like "the AI is bad" rather
+than "the rules are wrong".
+
+1. **Reload was a trap.** The reload took 45 ticks and the decision cadence is
+   4 ticks, so re-arming the timer on every reissued intent meant a unit
+   reloaded forever. Then, once fixed, reloading still zeroed the movement
+   intent, so a unit stood dead in the open for 45 ticks while a carrier got
+   shot. Reloading now keeps walking.
+
+2. **The wall shell was a prison.** Collision used a padded box, and a unit
+   resting exactly on the shell counted as *inside* it. Every collision query
+   from that spot answered "blocked", so units froze against walls forever. The
+   fix is threefold: a strict interior test, an overlap that must have length,
+   and a perpendicular fallback so a cornered unit turns it instead of stalling.
+   This one alone accounted for most of the side bias.
+
+3. **Defenders broke the flags.** One flag-handling rule said "any unit standing
+   on this flag returns it", applied even when nobody was carrying anything. A
+   defender loitering near home made the flag vanish for ten seconds.
+
+4. **Array order was a team.** Bullets resolved against the first unit in the
+   unit list, and blue units are first. Clumped squads overlap constantly, so
+   every exchange went to blue. Separating units had the same flaw: pushes were
+   applied as they were computed, making the result depend on storage order.
+   Both now resolve independently of order, and the arena test suite asserts the
+   map and the waypoint graph are mirror-symmetric so this cannot creep back.
+
+Capture-the-flag also needs four feature slots the old game did not:
+`has_flag`, `flag_stolen`, `score_proximity`, and `carrier_dist`. Without them a
+linear policy can see hp and line of sight but cannot tell "run the flag home"
+from "charge the enemy", because both look like advancing.
 
 ## The three contracts
 
@@ -96,8 +141,8 @@ body           int8 weights [ctx][action][feature]
                float32 feature scales, float32 bias scale
 ```
 
-The reference arena's gated brain is **365 bytes**, the ungated tier-1 brain is
-**152 bytes**, both under the 1 KB budget.
+The reference arena's gated brain is **493 bytes**, the ungated tier-1 brain is
+**196 bytes**, both under the 1 KB budget.
 
 The gate is two ramp inputs into four contexts, with a minimum dwell so the
 policy does not thrash. Thresholds are trained alongside the weights, because
@@ -203,9 +248,12 @@ difference between AI that is strong and NPCs that feel fair.
 `npm run serve`, then open `http://localhost:8080/docs/`. It needs an HTTP
 origin: browsers block module imports and `fetch()` on `file://`.
 
-1. **Live arena.** The real `.s1b` in the visitor's browser. Swap between
-   random, scripted, 152-byte tiny, the imitation fit, and the hourly
-   champion. Same fight, different shapes.
+1. **Live arena.** The real `.s1b` in the visitor's browser, art from the Kenney
+   space shooter kit. Swap between random, scripted, human-like, the 196-byte
+   tiny table, the imitation fit, and the hourly champion. Same fight, different
+   shapes. Blue and red are separated by colour on ships, tracers, dotted target
+   lines, flags, and the HUD, because two teams that read the same in a
+   firefight is the worst readability failure this kind of game has.
 2. **X-ray.** Click any unit for the exact per-feature contribution behind its
    decision, the score gap over the runner-up, and where it sits on the gate's
    thresholds. A linear policy can do this; a network cannot.
@@ -213,9 +261,17 @@ origin: browsers block module imports and `fetch()` on `file://`.
    curve, straight from the last `metrics.json`.
 4. **Game chooser.** Reads `games/index.json`, renders any game's spec in plain
    language, swaps the brain.
-5. **Teach it.** Play in the browser, download the `.s1d`, open a PR. Browsers
-   cannot trigger Actions safely without a token, so the PR route is the honest
-   one.
+5. **Teach it.** Play in the browser with WASD and the mouse, download the
+   `.s1d`, open a PR. Browsers cannot trigger Actions safely without a token, so
+   the PR route is the honest one.
+
+### Controls
+
+`WASD` moves the white-ringed unit. `Space` holds position and overrides WASD.
+The mouse sets the firing angle and **left click fires** — nothing fires on its
+own, and a shot only lands if an enemy is inside your aim cone. `Q` shields, `R`
+reloads, `Tab` hands you another unit. Two AI teammates come from the brain on
+your side, so you lead a squad rather than playing alone.
 
 ## Repository layout
 

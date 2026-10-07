@@ -6,7 +6,7 @@
 // Wilson score lower bound above a margin, not just "more wins than losses".
 
 import { runMatch } from '../games/arena/src/match.js';
-import { brainController } from '../games/arena/src/controllers.js';
+import { brainController, scriptedHumanized } from '../games/arena/src/controllers.js';
 
 export const K = 24;
 
@@ -29,10 +29,13 @@ export function wilson(wins, n, z = 1.96) {
   return { p, lo: Math.max(0, (centre - margin) / d), hi: Math.min(1, (centre + margin) / d) };
 }
 
-export function series(spec, brain, opponent, { matches = 40, bothSides = true, humanizeLevel = null, seedBase = 1 } = {}) {
+export function series(spec, brain, opponent, { matches = 40, bothSides = true, humanizeOpponent = null, seedBase = 1 } = {}) {
   const opts = { gated: true };
-  if (humanizeLevel != null) opts.humanizer = humanizeLevel;
   const ctl = brainController(brain, opts);
+  // `humanizeOpponent` dials the OPPONENT down, not the brain under test.
+  // Humanizing the candidate instead would measure how bad the candidate gets,
+  // which is the opposite of what "did we reach human level" means.
+  const foe = humanizeOpponent != null ? scriptedHumanized(humanizeOpponent, 7) : opponent;
   let wins = 0, draws = 0, losses = 0;
   let scoreSum = 0;
   let played = 0;
@@ -42,8 +45,8 @@ export function series(spec, brain, opponent, { matches = 40, bothSides = true, 
     for (let i = 0; i < per; i++) {
       const seed = seedBase + i * 7 + (side === 'red' ? 40000 : 0);
       const r = side === 'blue'
-        ? runMatch({ seed, blue: ctl, red: opponent }).result
-        : runMatch({ seed, blue: opponent, red: ctl }).result;
+        ? runMatch({ seed, blue: ctl, red: foe }).result
+        : runMatch({ seed, blue: foe, red: ctl }).result;
       const mine = side === 'blue' ? r.win : -r.win;
       scoreSum += (r.score[0] - r.score[1]) * (side === 'blue' ? 1 : -1);
       if (mine > 0) wins++; else if (mine < 0) losses++; else draws++;

@@ -4,13 +4,15 @@
     {
       "dir": "arena",
       "id": "arena",
-      "title": "Three-lane Skirmish",
-      "summary": "3v3 with walls, one capture point, and seven discrete intents. The reference game: everything here is ordinary game code.",
+      "title": "Station Run (capture the flag)",
+      "summary": "3v3 capture the flag in a derelict station. Fixed hand-authored map, real projectiles, no friendly fire. Three lanes and a central pillar, so stealing the flag means committing to a flank.",
       "brains": [
-        { "file": "tiny.s1b", "label": "tiny linear", "note": "single table, no gate", "controller": "brain" },
         { "file": "champion.s1b", "label": "hourly champion", "note": "gated, trained by self-play", "controller": "brain" },
         { "file": "imitated.s1b", "label": "imitated", "note": "OLS fit on .s1d recordings", "controller": "brain" },
+        { "file": "candidate.s1b", "label": "last candidate", "note": "promoted only if it wins", "controller": "brain" },
+        { "file": "tiny.s1b", "label": "tiny linear", "note": "one table, no gate", "controller": "brain" },
         { "file": null, "label": "scripted", "note": "hand-written rules, never learns", "controller": "scripted" },
+        { "file": null, "label": "human-like", "note": "scripted through the difficulty dial", "controller": "human" },
         { "file": null, "label": "random", "note": "uniform over 7 intents", "controller": "random" }
       ]
     }

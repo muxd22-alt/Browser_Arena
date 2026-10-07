@@ -1,243 +1,190 @@
 {
   "game": "arena",
-  "generated_at": "2026-10-07T09:17:11.772Z",
-  "champion_bytes": 365,
+  "generated_at": "2026-10-07T10:19:10.464Z",
+  "champion_bytes": 493,
   "budget_bytes": 1024,
-  "promoted": true,
+  "promoted": false,
   "promotion": {
-    "promote": true,
-    "reasons": [],
-    "regress": -0.16666666666666674
+    "promote": false,
+    "reasons": [
+      "Wilson lower bound 0.000 below 0.55",
+      "win rate 0.000 not above 0.5"
+    ],
+    "regress": 0
   },
   "imitation": {
-    "accuracy": 0.9192229038854806,
-    "samples": 7824,
+    "accuracy": 0.8603174603174604,
+    "samples": 2520,
     "bySource": {
       "human": 0,
-      "scripted": 3912,
+      "scripted": 1260,
       "selfplay": 0
     }
   },
   "series": {
     "vs_champion": {
       "matches": 60,
-      "wins": 51,
-      "losses": 9,
-      "draws": 0,
-      "win_rate": 0.85,
+      "wins": 0,
+      "losses": 0,
+      "draws": 60,
+      "win_rate": 0,
       "ci": [
-        0.739,
-        0.919
+        0,
+        1
       ]
     },
     "vs_scripted": {
       "matches": 30,
-      "wins": 24,
-      "losses": 6,
+      "wins": 17,
+      "losses": 13,
       "draws": 0,
-      "win_rate": 0.8,
+      "win_rate": 0.567,
       "ci": [
-        0.627,
-        0.905
+        0.392,
+        0.726
       ]
     },
     "champion_vs_scripted": {
       "matches": 30,
-      "wins": 19,
-      "losses": 11,
+      "wins": 17,
+      "losses": 13,
       "draws": 0,
-      "win_rate": 0.633,
+      "win_rate": 0.567,
       "ci": [
-        0.455,
-        0.781
+        0.392,
+        0.726
       ]
     },
     "vs_random": {
       "matches": 16,
-      "wins": 14,
-      "losses": 1,
-      "draws": 1,
-      "win_rate": 0.933,
+      "wins": 16,
+      "losses": 0,
+      "draws": 0,
+      "win_rate": 1,
       "ci": [
-        0.702,
-        0.988
+        0.806,
+        1
       ]
     },
     "vs_humanized": {
       "matches": 16,
-      "wins": 11,
-      "losses": 5,
-      "draws": 0,
-      "win_rate": 0.688,
+      "wins": 12,
+      "losses": 3,
+      "draws": 1,
+      "win_rate": 0.8,
       "ci": [
-        0.444,
-        0.858
+        0.548,
+        0.93
       ]
     }
   },
   "ladder": {
-    "champion": 1130,
-    "candidate": 1073,
-    "imitated": 985,
-    "scripted": 938,
-    "random": 874
+    "champion": 1201,
+    "candidate": 1130,
+    "scripted": 1038,
+    "imitated": 893,
+    "random": 738
   },
   "difficulty_curve": [
     {
       "level": 0,
-      "winRate": 0.875,
-      "lo": 0.69,
-      "hi": 0.957
+      "winRate": 0.583,
+      "lo": 0.388,
+      "hi": 0.755
     },
     {
       "level": 0.25,
-      "winRate": 0.667,
-      "lo": 0.467,
-      "hi": 0.82
+      "winRate": 0.85,
+      "lo": 0.64,
+      "hi": 0.948
     },
     {
       "level": 0.5,
-      "winRate": 0.625,
-      "lo": 0.427,
-      "hi": 0.788
+      "winRate": 1,
+      "lo": 0.824,
+      "hi": 1
     },
     {
       "level": 0.75,
-      "winRate": 0.792,
-      "lo": 0.595,
-      "hi": 0.908
+      "winRate": 0.706,
+      "lo": 0.469,
+      "hi": 0.867
     },
     {
       "level": 1,
-      "winRate": 0.542,
-      "lo": 0.351,
-      "hi": 0.721
+      "winRate": 0.737,
+      "lo": 0.512,
+      "hi": 0.882
     }
   ],
   "generations": [
     {
       "gen": 0,
-      "best": 0.9875
+      "best": 1.06
     },
     {
       "gen": 1,
-      "best": 1.1025
+      "best": 1.06
     },
     {
       "gen": 2,
-      "best": 1.1025
+      "best": 1.06
     },
     {
       "gen": 3,
-      "best": 1.1025
+      "best": 1.06
     },
     {
       "gen": 4,
-      "best": 1.1025
+      "best": 1.06
     },
     {
       "gen": 5,
-      "best": 1.1025
+      "best": 1.06
     },
     {
       "gen": 6,
-      "best": 1.1025
+      "best": 1.06
     },
     {
       "gen": 7,
-      "best": 1.1025
+      "best": 1.06
     },
     {
       "gen": 8,
-      "best": 1.1025
+      "best": 1.06
     },
     {
       "gen": 9,
-      "best": 1.1025
+      "best": 1.06
     },
     {
       "gen": 10,
-      "best": 1.1025
+      "best": 1.06
     },
     {
       "gen": 11,
-      "best": 1.1075
+      "best": 1.06
     },
     {
       "gen": 12,
-      "best": 1.115
+      "best": 1.06
     },
     {
       "gen": 13,
-      "best": 1.115
+      "best": 1.06
     },
     {
       "gen": 14,
-      "best": 1.115
+      "best": 1.06
     },
     {
       "gen": 15,
-      "best": 1.115
+      "best": 1.06
     },
     {
       "gen": 16,
-      "best": 1.115
-    },
-    {
-      "gen": 17,
-      "best": 1.1175
-    },
-    {
-      "gen": 18,
-      "best": 1.1175
-    },
-    {
-      "gen": 19,
-      "best": 1.1175
-    },
-    {
-      "gen": 20,
-      "best": 1.1175
-    },
-    {
-      "gen": 21,
-      "best": 1.1175
-    },
-    {
-      "gen": 22,
-      "best": 1.1175
-    },
-    {
-      "gen": 23,
-      "best": 1.1175
-    },
-    {
-      "gen": 24,
-      "best": 1.1175
-    },
-    {
-      "gen": 25,
-      "best": 1.1175
-    },
-    {
-      "gen": 26,
-      "best": 1.12
-    },
-    {
-      "gen": 27,
-      "best": 1.12
-    },
-    {
-      "gen": 28,
-      "best": 1.12
-    },
-    {
-      "gen": 29,
-      "best": 1.12
-    },
-    {
-      "gen": 30,
-      "best": 1.12
+      "best": 1.06
     }
   ]
 }

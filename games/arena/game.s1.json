@@ -1,11 +1,12 @@
 {
   "s1": 1,
   "id": "arena",
-  "title": "Three-lane Skirmish",
-  "blurb": "Three units a side, walls for cover, one capture point. Decisions are discrete: push, hold, peek, fall back, swap, use the shield, reload.",
+  "title": "Station Run",
+  "blurb": "Capture the flag in a derelict station. Fixed map, no procedural generation. Steal the enemy flag, carry it to your base, do not shoot your own squad. Three lanes, a central pillar, and two base bumpers that force a flank.",
   "features": [
     "enemy_dist", "enemy_visible", "hp", "ammo", "cover_dist",
-    "objective_dist", "allies_alive", "enemies_alive", "ability_ready", "time_left"
+    "objective_dist", "allies_alive", "enemies_alive", "ability_ready", "time_left",
+    "has_flag", "flag_stolen", "score_proximity", "carrier_dist"
   ],
   "actions": ["advance", "hold", "peek", "retreat", "rotate", "use_ability", "reload"],
   "contexts": ["execute", "default", "hold", "save"],
@@ -15,12 +16,13 @@
     "min_dwell_s": 0.6
   },
   "archetypes": ["entry", "support", "sniper"],
-  "reward": { "kill": 1, "death": -1, "objective": 3, "win": 5 },
+  "reward": { "kill": 1, "death": -1, "flag_take": 2, "capture": 5, "return": 1, "win": 8 },
   "budget_bytes": 1024,
   "sim": {
     "tick_rate": 20,
     "decision_every": 4,
-    "match_seconds": 60,
-    "team_size": 3
+    "match_seconds": 120,
+    "team_size": 3,
+    "captures_to_win": 3
   }
 }

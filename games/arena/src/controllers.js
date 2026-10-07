@@ -6,47 +6,68 @@
 // playing in the browser are all interchangeable opponents.
 
 import { decide, gateContext, CTX_DEFAULT, ramp } from '../../../sdk/js/s1.js';
-import { ACTIONS, CAPTURE, TICK_RATE } from './arena.js';
+import { ACTIONS, ACTION, TICK_RATE } from './arena.js';
+
+const dist = (ax, ay, bx, by) => Math.hypot(ax - bx, ay - by);
 
 const fbuf = new Float64Array(16);
-const ACTION_INDEX = Object.fromEntries(ACTIONS.map((n, i) => [n, i]));
 
 /**
  * Scripted baseline: rule-based, hand-written, never learns. This is the bar a
- * fresh brain has to clear to be worth shipping. Also useful as the replay
- * opponent when measuring "did we actually reach human level".
+ * fresh brain has to clear to be worth shipping, and the replay opponent for
+ * "did we actually reach human level".
+ *
+ * The one non-obvious rule is the defence. A naive "chase the flag carrier"
+ * policy is self-defeating: the instant the enemy takes your flag, every unit
+ * turns around and walks home, so the enemy takes the other one too and the
+ * match becomes a see-saw with no captures. Only units already near their own
+ * base react, and only one of them. Everyone else keeps playing the objective.
  */
 export function scriptedController(unit) {
   const a = this.arena;
   const f = a.observe(unit, fbuf);
-  const A = ACTION_INDEX;
+  const A = ACTION;
   const vis = f[1] > 0;
   const enemies = a.enemiesOf(unit).length;
-  const hurt = f[2] < -0.25;
-  // Use the real capture radius, not a threshold on objective_dist. A fuzzy
-  // feature threshold makes bots park short of the point and stalemate.
-  const onPoint = Math.hypot(unit.x - CAPTURE.x, unit.y - CAPTURE.y) <= CAPTURE.r + 8;
+  const hurt = f[2] < -0.3;
+  const obj = a.objectiveFor(unit);
+  const dObj = dist(unit.x, unit.y, obj.x, obj.y);
 
-  // Empty is the only reason to stand still: walking while reloading is free.
-  if (unit.ammo === 0 || unit.reloading > 0) return A.reload;
+  // Empty is not a reason to stop: the reload does not interrupt movement.
+  if (unit.ammo === 0) return A.reload;
 
+  // Carrying: the only goal is home.
+  if (unit.carrying) {
+    if (unit.hp < 22 && vis) return A.retreat;
+    return A.advance;
+  }
+
+  // Defend, but only from inside our own half and only with one unit. The
+  // closest unit to the threat is the defender; everyone else ignores it.
+  const mine = a.flags[unit.team];
+  if (mine.state === 'carried' || mine.state === 'dropped') {
+    const base = a.constructor.BASES ? a.constructor.BASES[unit.team] : { x: unit.x, y: unit.y };
+    const near = Math.hypot(unit.x - base.x, unit.y - base.y) < 230;
+    if (near && dObj < 120 && a.isDefender(unit)) {
+      if (vis && unit.cd <= 0 && enemies >= 2) return A.use_ability;
+      return A.advance;
+    }
+  }
+
+  // Fight back when there is something to fight.
   if (vis && hurt && enemies >= 2) return A.retreat;
   if (vis && unit.cd <= 0 && enemies >= 2) return A.use_ability;
-  if (vis && !onPoint) return A.peek;
+  if (vis && enemies === 1 && dObj < 220) return A.peek;
 
-  // No line of sight. Hold the point if we own it, otherwise push.
-  // We own the point and nobody is in range: sit on it. Wandering off is how
-  // you hand the objective back.
-  if (onPoint) return A.hold;
   return A.advance;
 }
 
-/** Random walk. Floor of the ladder, and a sanity check that the sim actually has skill gradient. */
+/** Random walk. Floor of the ladder, and a check that the sim has a real gradient. */
 export function randomController() {
   return Math.floor(this.rng() * 7);
 }
 
-/** Empty brain: fires the first action always. Proves the tensor plumbing before any learning happens. */
+/** Fires the first action always. Proves the tensor plumbing before any learning happens. */
 export function constantController() {
   return 0;
 }
@@ -67,12 +88,20 @@ export function brainController(brain, opts = {}) {
       ctx = gateContext(brain, p, adv, unit.ctx, unit.ctxSince);
     }
     unit.ctx = ctx;
-    const arch = archetypeFor ? archetypeFor(unit) : 0;
+    const arch = archetypeFor ? archetypeFor(unit) : (unit.arch ?? 0);
+    unit.features = Array.from(f.slice(0, brain.nF));
     let act = decide(brain, f, arch, ctx).action;
 
+    // Bots need to aim. The brain chooses an intent; aiming is the game's own
+    // controller, exactly as steering is.
+    const target = a.visibleEnemies(unit)[0] ?? a.nearestEnemy(unit).unit;
+    if (target) a.aimAt(unit, target.x, target.y);
+    else {
+      const obj = a.objectiveFor(unit);
+      a.aimAt(unit, obj.x, obj.y);
+    }
+
     if (humanizer) {
-      // Reaction lag: hold the previous action until the humanizer says the
-      // switch may happen now. Deterministic per unit so matches replay.
       const gate = humanizer.reactionGate(unit, act, this.tick);
       if (!gate) act = unit.lastApplied ?? act;
       else unit.lastApplied = act;
@@ -80,16 +109,24 @@ export function brainController(brain, opts = {}) {
     }
     unit.arch = arch;
     unit.ctxSnapshot = ctx;
-    unit.features = Array.from(f.slice(0, brain.nF));
     return act;
   };
 }
 
+/** Scripted bot running through the difficulty dial: the stand-in for a human replay. */
+export function scriptedHumanized(level, seed = 1) {
+  const hz = humanizer(level, seed);
+  const base = scriptedController;
+  return function (unit) {
+    const raw = base.call(this, unit);
+    return hz.distort(hz.reactionGate(unit, raw, this.tick) ? raw : (unit.lastApplied ?? raw), unit.arch ?? 0, this.rng);
+  };
+}
+
 /**
- * The difficulty dial. One parameter drives reaction delay, aim error, and
- * mistake rate, so the same champion feels easy on low and superhuman on
- * high. Aim error is applied by the controller as a persistent angular bias,
- * which is a stand-in for a real aim model the game would own.
+ * The difficulty dial. One parameter drives reaction delay and mistake rate.
+ * Aim error lives in the arena as SHOT_SPREAD applied per team at fire time,
+ * which is where a real game would put its own aim model.
  */
 export function humanizer(level, seed = 1) {
   const L = Math.max(0, Math.min(1, level));
@@ -105,7 +142,6 @@ export function humanizer(level, seed = 1) {
     level: L,
     reactionTicks: Math.round(L * 0.8 * TICK_RATE),
     mistakeRate: L * 0.18,
-    aimErrDeg: L * 7,
     reactionGate(unit, act, tick) {
       let st = state.get(unit.id);
       if (!st) { st = { pending: act, since: tick }; state.set(unit.id, st); }
@@ -114,8 +150,7 @@ export function humanizer(level, seed = 1) {
       return false;
     },
     distort(act, arch, rng) {
-      // Snipers are steadier; entries are twitchier. Archetype modulates the
-      // mistake rate so the humanizer is not uniform across the roster.
+      // Snipers hold their nerve, entries are twitchy.
       const bias = arch === 2 ? 0.5 : arch === 1 ? 0.85 : 1.15;
       if (rng() < this.mistakeRate * bias) {
         let n = Math.floor(rng() * 7);

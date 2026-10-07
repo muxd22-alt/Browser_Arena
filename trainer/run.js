@@ -14,7 +14,7 @@ import { parseS1d } from '../sdk/js/s1d.js';
 import { imitate } from './imitate.js';
 import { evolve, quantize, evaluate } from './evolve.js';
 import { series, promotionDecision, ladder, wilson } from './league.js';
-import { scriptedController, randomController, brainController, humanizer } from '../games/arena/src/controllers.js';
+import { scriptedController, randomController, brainController } from '../games/arena/src/controllers.js';
 
 const root = resolve(dirname(fileURLToPath(import.meta.url)), '..');
 const argv = Object.fromEntries(
@@ -184,7 +184,7 @@ async function trainGame(gameDir, log) {
   const candVsScripted = series(spec, evol.brain, scriptedController, { matches: matches / 2 });
   const candVsRandom = series(spec, evol.brain, randomController, { matches: matches / 4 });
   const candVsHuman = series(spec, evol.brain, scriptedController, {
-    matches: matches / 4, humanizeLevel: humanizer(0.4, 7),
+    matches: matches / 4, humanizeOpponent: 0.4,
   });
 
   log(`league: vs champion ${fmt(candVsChampion)}`);
@@ -219,7 +219,7 @@ async function trainGame(gameDir, log) {
   // Difficulty curve for the "human-level progress" meter.
   const curve = [0, 0.25, 0.5, 0.75, 1].map((lv) => {
     const s = series(spec, promoted ? evol.brain : champion, scriptedController, {
-      matches: 24, humanizeLevel: lv > 0 ? humanizer(lv, 11) : null,
+      matches: 24, humanizeOpponent: lv > 0 ? lv : null,
     });
     return { level: lv, winRate: +s.winRate.toFixed(3), lo: +s.ci.lo.toFixed(3), hi: +s.ci.hi.toFixed(3) };
   });
