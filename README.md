@@ -23,16 +23,38 @@ GAME (any engine)  ──Contract 1──▶  S1 SDK (~20 lines per engine)
              SHOWCASE (GitHub Pages): live arena, X-ray, ladder, record-yourself
 ```
 
+**Live showcase:** <https://muxd22-alt.github.io/Browser_Arena/docs/>
+**Live trainer:** the `.github/workflows/evolve.yml` job runs every hour at
+`:17`, refreshes `games/arena/brains/champion.s1b`, and republishes the site.
+
+## Contents
+
+- [Quick start](#quick-start)
+- [What is actually implemented](#what-is-actually-implemented)
+- [Tour: read in this order](#tour-read-in-this-order)
+- [The reference game](#the-reference-game)
+- [The three contracts](#the-three-contracts)
+- [Cross-language parity](#cross-language-parity)
+- [Integrating a game](#integrating-a-game)
+- [The trainer](#the-trainer)
+- [Difficulty](#difficulty)
+- [The showcase page](#the-showcase-page)
+- [GitHub Pages setup](#github-pages-setup)
+- [Repository layout](#repository-layout)
+- [Limits worth stating plainly](#limits-worth-stating-plainly)
+
 ## Quick start
 
 ```bash
 npm test              # 38 tests: format, arena invariants, trainer math
-npm run demo          # full pipeline: imitate → self-play → league → publish
-npm run serve         # http://localhost:8080/docs/
+npm run demo         # full pipeline: imitate → self-play → league → publish
+npm run serve        # http://localhost:8080/docs/
 ```
 
 `npm run demo` finishes in about ten seconds and prints its own reasoning. It
-generates seed data on first run, so a fresh clone needs no setup.
+generates seed data on first run, so a fresh clone needs no setup. The showcase
+needs an HTTP origin — browsers block module imports and `fetch()` on
+`file://`.
 
 ## What is actually implemented
 
@@ -52,6 +74,25 @@ generates seed data on first run, so a fresh clone needs no setup.
 | Difficulty dial | `sdk/js/s1.js` + per-engine ports | done |
 | Showcase page | `docs/` | done, five sections |
 | Hourly pipeline | `.github/workflows/evolve.yml` | done |
+
+## Tour: read in this order
+
+If you have ten minutes and want the shape of the project:
+
+1. [The three contracts](#the-three-contracts) — the *only* thing every engine
+   has to know.
+2. [Integrating a game](#integrating-a-game) — the ~20 lines per engine that
+   hook you in.
+3. [The trainer](#the-trainer) — what `npm run demo` and the hourly job actually
+   do, in the order above.
+4. [The showcase page](#the-showcase-page) — what the published `.s1b` looks
+   like in a browser.
+5. [The reference game](#the-reference-game) — the 3v3 capture the flag that
+   proves the contracts end to end, including the four bugs the sim fought back
+   with.
+
+The [limits](#limits-worth-stating-plainly) section is worth coming back to as
+well, regardless of the order above.
 
 ## The reference game
 
@@ -137,7 +178,7 @@ header (16 B)  magic "S1B1", spec hash (u32), n_features, n_actions,
                n_contexts, n_archetypes, flags, min_dwell_ticks
 body           int8 weights [ctx][action][feature]
                int8 archetype biases [archetype][action]
-               int8 gate thresholds
+               int8 gate threshold (when gated)
                float32 feature scales, float32 bias scale
 ```
 
@@ -234,6 +275,10 @@ The warm start is chosen by measurement, not assumption: imitation is usually
 stronger early and evolution later, so the trainer evaluates both and starts
 from whichever actually wins.
 
+The same four stages run on every push through `npm test` (smoke) and on the
+hour through `.github/workflows/evolve.yml` (full pipeline, publishes the new
+champion if promoted).
+
 ## Difficulty
 
 Train the brain as strong as you like, then put the **humanizer** on top: one
@@ -272,6 +317,25 @@ The mouse sets the firing angle and **left click fires** — nothing fires on it
 own, and a shot only lands if an enemy is inside your aim cone. `Q` shields, `R`
 reloads, `Tab` hands you another unit. Two AI teammates come from the brain on
 your side, so you lead a squad rather than playing alone.
+
+## GitHub Pages setup
+
+The page imports `../sdk/...`, `../games/...`, and `../assets/...` from
+`docs/app.js`, so the **whole repo** has to be the site root, not just `docs/`.
+
+Two ways to land on the same site:
+
+- **Pages artifact (default, recommended).** The `evolve.yml` workflow builds
+  and uploads the entire repo as the Pages artifact. No manual setting needed;
+  the `pages` job in that workflow is the source of truth. Live URL:
+  `https://<user>.github.io/<repo>/docs/`.
+- **Branch source.** Settings → Pages → Source: *Deploy from a branch* → Branch:
+  `main` / `(root)`. The root `index.html` is a meta-refresh to `/docs/`, and
+  everything else resolves from there.
+
+Do **not** set Pages source to `main / docs`. With that setting, only the
+contents of `docs/` are published, `sdk/`, `games/`, and `assets/` 404, and the
+page is stuck on `loading…` because the JS modules fail to import.
 
 ## Repository layout
 
