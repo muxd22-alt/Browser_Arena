@@ -1,0 +1,91 @@
+name: evolve
+
+# The pipeline's heartbeat. Every hour: imitate, self-play, league, and publish
+# only if the candidate wins with statistical confidence.
+on:
+  schedule: [{ cron: '17 * * * *' }]
+  workflow_dispatch:
+    inputs:
+      generations:
+        description: 'ES generations per run'
+        default: '24'
+        required: false
+
+# Never let two runs train against the same champion at once.
+concurrency:
+  group: evolve
+  cancel-in-progress: false
+
+permissions:
+  contents: write
+  pages: write
+  id-token: write
+
+jobs:
+  train:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Install
+        run: npm ci || npm install
+
+      - name: Tests
+        run: npm test
+
+      - name: Conformance (JS evaluator vs golden vectors)
+        run: node spec/verify.js
+
+      - name: Train
+        run: |
+          node trainer/run.js --generations=${{ github.event.inputs.generations || 24 }}
+          node games/arena/record.js 6 || true
+
+      - name: Refresh golden vectors against the new champion
+        run: node spec/make-golden.js && node spec/verify.js
+
+      - name: Summarize
+        run: |
+          {
+            echo '### Run summary'
+            echo ''
+            for f in games/*/metrics.json; do
+              echo "#### \`$f\`"
+              echo '```json'
+              node -e "const m=require('./$f');console.log(JSON.stringify({
+                champion_bytes:m.champion_bytes, promoted:m.promoted,
+                reasons:m.promotion.reasons, ladder:m.ladder,
+                vs_scripted:m.series.vs_scripted, vs_humanized:m.series.vs_humanized
+              },null,1))"
+              echo '```'
+            done
+          } >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Commit if the champion changed
+        run: |
+          git config user.name 'system-one-bot'
+          git config user.email 'bot@users.noreply.github.com'
+          git add games/ metrics.json 2>/dev/null || true
+          git add games
+          if ! git diff --cached --quiet; then
+            git commit -m "champion: hourly evolve run"
+            git push
+          else
+            echo 'nothing to publish'
+          fi
+
+  pages:
+    needs: train
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/configure-pages@v5
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          # The page imports ../sdk and ../games, so the whole repo is the site
+          # root, not just docs/.
+          path: '.'

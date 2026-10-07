@@ -1,0 +1,26 @@
+{
+  "s1": 1,
+  "id": "arena",
+  "title": "Three-lane Skirmish",
+  "blurb": "Three units a side, walls for cover, one capture point. Decisions are discrete: push, hold, peek, fall back, swap, use the shield, reload.",
+  "features": [
+    "enemy_dist", "enemy_visible", "hp", "ammo", "cover_dist",
+    "objective_dist", "allies_alive", "enemies_alive", "ability_ready", "time_left"
+  ],
+  "actions": ["advance", "hold", "peek", "retreat", "rotate", "use_ability", "reload"],
+  "contexts": ["execute", "default", "hold", "save"],
+  "gate": {
+    "inputs": ["pressure", "advantage"],
+    "thresholds": [0.35, 0.15, -0.35, -0.1],
+    "min_dwell_s": 0.6
+  },
+  "archetypes": ["entry", "support", "sniper"],
+  "reward": { "kill": 1, "death": -1, "objective": 3, "win": 5 },
+  "budget_bytes": 1024,
+  "sim": {
+    "tick_rate": 20,
+    "decision_every": 4,
+    "match_seconds": 60,
+    "team_size": 3
+  }
+}

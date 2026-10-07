@@ -1,0 +1,138 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>System One</title>
+<link rel="stylesheet" href="./style.css">
+</head>
+<body>
+<header class="bar">
+  <div class="brand">
+    <span class="logo">S1</span>
+    <div>
+      <h1>System One</h1>
+      <p class="sub">one spec &middot; one recording format &middot; one brain file &mdash; across every game</p>
+    </div>
+  </div>
+  <div class="bar-right">
+    <label class="field">
+      <span>Game</span>
+      <select id="game-select"></select>
+    </label>
+    <label class="field">
+      <span>Side</span>
+      <select id="side-select">
+        <option value="blue">you are blue</option>
+        <option value="red">you are red</option>
+      </select>
+    </label>
+    <span id="status" class="status">loading&hellip;</span>
+  </div>
+</header>
+
+<main>
+  <section class="panel arena-panel">
+    <div class="panel-head">
+      <h2>1 &middot; Live arena</h2>
+      <p class="hint">The real <code>.s1b</code>, running in this tab. Swap the controller and watch the same fight change shape.</p>
+    </div>
+
+    <div class="controls">
+      <label class="field wide">
+        <span>Blue team</span>
+        <select id="blue-ctl"></select>
+      </label>
+      <label class="field wide">
+        <span>Red team</span>
+        <select id="red-ctl"></select>
+      </label>
+      <label class="field">
+        <span>Difficulty</span>
+        <input id="humanize" type="range" min="0" max="100" value="0">
+        <output id="humanize-out">superhuman</output>
+      </label>
+      <div class="field">
+        <span>Speed</span>
+        <div class="btns">
+          <button id="btn-pause">Pause</button>
+          <button id="btn-step">Step</button>
+          <button id="btn-reset">Restart</button>
+          <button id="btn-speed">1&times;</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="stage">
+      <canvas id="canvas" width="960" height="600"></canvas>
+      <div id="overlay" class="overlay hidden"></div>
+    </div>
+
+    <div class="legend" id="legend"></div>
+
+    <div class="keyhelp">
+      <b>You drive the highlighted unit:</b>
+      <kbd>W</kbd><kbd>A</kbd><kbd>S</kbd><kbd>D</kbd> move &middot;
+      <kbd>Tab</kbd> next unit &middot;
+      <kbd>Q</kbd> ability &middot;
+      <kbd>R</kbd> reload &middot;
+      <kbd>Space</kbd> hold position &middot;
+      fires automatically at whatever it can see
+    </div>
+  </section>
+
+  <section class="panel xray-panel">
+    <div class="panel-head">
+      <h2>2 &middot; X-ray</h2>
+      <p class="hint">Click any unit. A linear policy can show its own arithmetic exactly, which a network cannot.</p>
+    </div>
+    <div id="xray" class="xray">
+      <p class="empty">Select a unit on the field.</p>
+    </div>
+  </section>
+
+  <section class="panel">
+    <div class="panel-head">
+      <h2>3 &middot; Ladder</h2>
+      <p class="hint">Ratings and win rates from the last training run, straight out of <code>metrics.json</code>.</p>
+    </div>
+    <div id="ladder" class="ladder"></div>
+    <div id="progress" class="progress"></div>
+  </section>
+
+  <section class="panel">
+    <div class="panel-head">
+      <h2>4 &middot; Game spec, in plain words</h2>
+      <p class="hint">This is the whole per-game work. Everything else is shared.</p>
+    </div>
+    <div id="spec" class="spec"></div>
+  </section>
+
+  <section class="panel">
+    <div class="panel-head">
+      <h2>5 &middot; Teach it</h2>
+      <p class="hint">Play a match, download the <code>.s1d</code>, and the next hourly run imitates it.</p>
+    </div>
+    <div class="teach">
+      <ol>
+        <li>Set one side to <b>you</b> and play to the end of a match.</li>
+        <li>Download the recording. It is one JSON line per decision, your exact states.</li>
+        <li>Open a pull request adding it to <code>games/&lt;game&gt;/data/human/</code>.</li>
+        <li>The next scheduled run weights human data highest and fits from it.</li>
+      </ol>
+      <div class="btns">
+        <button id="btn-record" class="primary">Start recording</button>
+        <button id="btn-download" disabled>Download .s1d</button>
+        <span id="record-status" class="status"></span>
+      </div>
+    </div>
+  </section>
+</main>
+
+<footer>
+  <p>Reference implementation. The evaluator is ~20 lines per engine; see <code>sdk/</code>. Golden vectors in <code>spec/golden.json</code> prove the JS, C#, and GDScript evaluators agree.</p>
+</footer>
+
+<script type="module" src="./app.js"></script>
+</body>
+</html>

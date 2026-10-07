@@ -1,0 +1,90 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://system-one.dev/spec/game.s1.schema.json",
+  "title": "System One game spec",
+  "description": "Contract 1. The only per-game design work in System One: what the AI sees and what it can do.",
+  "type": "object",
+  "required": ["s1", "id", "features", "actions", "contexts", "gate", "archetypes", "budget_bytes"],
+  "additionalProperties": false,
+  "properties": {
+    "s1": { "const": 1 },
+    "id": { "type": "string", "pattern": "^[a-z0-9][a-z0-9-]*$" },
+    "title": { "type": "string" },
+    "blurb": { "type": "string" },
+    "features": {
+      "type": "array",
+      "minItems": 1,
+      "maxItems": 64,
+      "uniqueItems": true,
+      "items": { "type": "string", "pattern": "^[a-z][a-z0-9_]*$" },
+      "description": "Fixed feature slots. Every slot is normalized to [-1,1] by the game before the brain sees it. Order is part of the spec hash: reordering invalidates every trained brain."
+    },
+    "actions": {
+      "type": "array",
+      "minItems": 2,
+      "maxItems": 32,
+      "uniqueItems": true,
+      "items": { "type": "string", "pattern": "^[a-z][a-z0-9_]*$" },
+      "description": "Discrete intents. The game maps each index to its own steering, aiming, and animation. Continuous control is deliberately not in the contract because it does not transfer between games."
+    },
+    "contexts": {
+      "type": "array",
+      "minItems": 1,
+      "maxItems": 8,
+      "uniqueItems": true,
+      "items": { "type": "string", "pattern": "^[a-z][a-z0-9_]*$" },
+      "description": "Moods the gate can select. A gated brain needs one weight row set per context."
+    },
+    "gate": {
+      "type": "object",
+      "required": ["inputs"],
+      "additionalProperties": false,
+      "properties": {
+        "inputs": {
+          "type": "array",
+          "minItems": 1,
+          "maxItems": 4,
+          "items": { "type": "string" },
+          "description": "Names of the gate's ramp inputs. These are derived from the feature vector by the game, so they cost no extra integration."
+        },
+        "thresholds": {
+          "type": "array",
+          "minItems": 4,
+          "maxItems": 4,
+          "items": { "type": "number", "minimum": -1, "maximum": 1 },
+          "description": "Defaults for the trained brain: [execute_pressure, execute_advantage, save_below, hold_below]. Trained values in the .s1b override these."
+        },
+        "min_dwell_s": { "type": "number", "minimum": 0, "maximum": 5 }
+      }
+    },
+    "archetypes": {
+      "type": "array",
+      "minItems": 1,
+      "maxItems": 16,
+      "uniqueItems": true,
+      "items": { "type": "string", "pattern": "^[a-z][a-z0-9_]*$" },
+      "description": "Roles. Each gets a bias row so the same brain plays an entry and a sniper differently."
+    },
+    "reward": {
+      "type": "object",
+      "description": "Shaping weights for the trainer. Recorded in the spec so the reward is reviewable, not buried in code.",
+      "additionalProperties": { "type": "number" }
+    },
+    "budget_bytes": {
+      "type": "integer",
+      "minimum": 64,
+      "description": "Hard cap on brain size. The pipeline refuses to publish a brain that exceeds it. Tiers: ~1 KB linear, ~4 KB with two hidden ramps, ~16 KB for a small MLP."
+    },
+    "sim": {
+      "type": "object",
+      "description": "Optional. Only needed by the headless trainer and the browser arena; a Unity game can omit it.",
+      "additionalProperties": false,
+      "properties": {
+        "tick_rate": { "type": "integer", "minimum": 1 },
+        "decision_every": { "type": "integer", "minimum": 1 },
+        "match_seconds": { "type": "integer", "minimum": 5 },
+        "team_size": { "type": "integer", "minimum": 1 }
+      }
+    }
+  }
+}

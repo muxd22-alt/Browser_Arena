@@ -1,0 +1,14 @@
+{
+  "name": "system-one",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "System One: one brain format, one recording format, one game spec. Reference implementation + browser arena.",
+  "scripts": {
+    "test": "node --test spec/test/*.test.js games/arena/test/*.test.js trainer/test/*.test.js",
+    "demo": "node trainer/run.js",
+    "record": "node games/arena/record.js",
+    "serve": "node docs/serve.js"
+  },
+  "engines": { "node": ">=18" }
+}
