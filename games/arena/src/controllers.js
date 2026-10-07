@@ -6,7 +6,7 @@
 // playing in the browser are all interchangeable opponents.
 
 import { decide, gateContext, CTX_DEFAULT, ramp } from '../../../sdk/js/s1.js';
-import { ACTIONS, ACTION, TICK_RATE } from './arena.js';
+import { ACTIONS, ACTION, TICK_RATE, BASES } from './arena.js';
 
 const dist = (ax, ay, bx, by) => Math.hypot(ax - bx, ay - by);
 
@@ -46,7 +46,7 @@ export function scriptedController(unit) {
   // closest unit to the threat is the defender; everyone else ignores it.
   const mine = a.flags[unit.team];
   if (mine.state === 'carried' || mine.state === 'dropped') {
-    const base = a.constructor.BASES ? a.constructor.BASES[unit.team] : { x: unit.x, y: unit.y };
+    const base = BASES[unit.team];
     const near = Math.hypot(unit.x - base.x, unit.y - base.y) < 230;
     if (near && dObj < 120 && a.isDefender(unit)) {
       if (vis && unit.cd <= 0 && enemies >= 2) return A.use_ability;
@@ -92,11 +92,10 @@ export function brainController(brain, opts = {}) {
     unit.features = Array.from(f.slice(0, brain.nF));
     let act = decide(brain, f, arch, ctx).action;
 
-    // Bots need to aim. The brain chooses an intent; aiming is the game's own
-    // controller, exactly as steering is.
     const target = a.visibleEnemies(unit)[0] ?? a.nearestEnemy(unit).unit;
-    if (target) a.aimAt(unit, target.x, target.y);
-    else {
+    if (target) {
+      a.aimAt(unit, target.x, target.y);
+    } else {
       const obj = a.objectiveFor(unit);
       a.aimAt(unit, obj.x, obj.y);
     }

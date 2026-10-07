@@ -61,30 +61,35 @@ export const WALLS = [
   { x: 444, y: 176, w: 20, h: 48 },
 ];
 
-// Purely visual. Present for decoration and for the eye to read depth; never
+// Purely visual. Present for decoration and to give the eye depth; never
 // queried by movement, sight, or bullets.
+//
+// Sizes matter more than they look here. The station sprites are authored at
+// 300-odd pixels, so these scales are small on purpose: decoration that
+// competes with the playfield is not decoration, it is a readability bug. Keep
+// every entry well under a fifth of the arena and off the lanes.
 export const DECOR = [
-  { s: 'solar_blue', x: 96, y: 96, r: 0, scale: 0.9 },
-  { s: 'solar_red', x: 544, y: 96, r: Math.PI, scale: 0.9 },
-  { s: 'solar_blue', x: 96, y: 296, r: Math.PI, scale: 0.9 },
-  { s: 'solar_red', x: 544, y: 296, r: 0, scale: 0.9 },
-  { s: 'dome_a', x: 62, y: 156, r: 0, scale: 1 },
-  { s: 'dome_b', x: 60, y: 232, r: 0, scale: 1 },
-  { s: 'dome_b', x: 578, y: 156, r: Math.PI, scale: 1 },
-  { s: 'dome_a', x: 580, y: 232, r: Math.PI, scale: 1 },
-  { s: 'tower', x: 210, y: 34, r: 0, scale: 0.34 },
-  { s: 'tower', x: 430, y: 34, r: 0, scale: 0.34 },
-  { s: 'dish', x: 232, y: 190, r: -0.5, scale: 0.6 },
-  { s: 'dish', x: 408, y: 212, r: 0.5, scale: 0.6 },
-  { s: 'mast', x: 168, y: 348, r: 0, scale: 1 },
-  { s: 'mast', x: 472, y: 348, r: 0, scale: 1 },
-  { s: 'mast', x: 168, y: 40, r: Math.PI, scale: 1 },
-  { s: 'mast', x: 472, y: 40, r: Math.PI, scale: 1 },
-  { s: 'rock_a', x: 268, y: 118, r: 0.4, scale: 0.34 },
-  { s: 'rock_b', x: 372, y: 282, r: -0.8, scale: 0.32 },
-  { s: 'rock_c', x: 500, y: 148, r: 1.2, scale: 0.3 },
-  { s: 'rock_b', x: 140, y: 236, r: 0.2, scale: 0.3 },
-  { s: 'rock_c', x: 596, y: 268, r: -0.3, scale: 0.3 },
+  { s: 'solar_blue', x: 104, y: 92, r: 0, scale: 0.32 },
+  { s: 'solar_red', x: 536, y: 92, r: Math.PI, scale: 0.32 },
+  { s: 'solar_blue', x: 104, y: 308, r: Math.PI, scale: 0.32 },
+  { s: 'solar_red', x: 536, y: 308, r: 0, scale: 0.32 },
+  { s: 'dome_a', x: 60, y: 150, r: 0, scale: 0.42 },
+  { s: 'dome_b', x: 58, y: 250, r: 0, scale: 0.42 },
+  { s: 'dome_b', x: 580, y: 150, r: Math.PI, scale: 0.42 },
+  { s: 'dome_a', x: 582, y: 250, r: Math.PI, scale: 0.42 },
+  { s: 'tower', x: 214, y: 26, r: 0, scale: 0.11 },
+  { s: 'tower', x: 426, y: 26, r: 0, scale: 0.11 },
+  { s: 'dish', x: 246, y: 196, r: -0.5, scale: 0.17 },
+  { s: 'dish', x: 394, y: 208, r: 0.5, scale: 0.17 },
+  { s: 'mast', x: 172, y: 372, r: 0, scale: 0.5 },
+  { s: 'mast', x: 468, y: 372, r: 0, scale: 0.5 },
+  { s: 'mast', x: 172, y: 20, r: Math.PI, scale: 0.5 },
+  { s: 'mast', x: 468, y: 20, r: Math.PI, scale: 0.5 },
+  { s: 'rock_a', x: 268, y: 112, r: 0.4, scale: 0.11 },
+  { s: 'rock_b', x: 372, y: 292, r: -0.8, scale: 0.1 },
+  { s: 'rock_c', x: 508, y: 150, r: 1.2, scale: 0.1 },
+  { s: 'rock_b', x: 132, y: 240, r: 0.2, scale: 0.1 },
+  { s: 'rock_c', x: 508, y: 256, r: -0.3, scale: 0.1 },
 ];
 
 export const BASES = {

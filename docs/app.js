@@ -127,6 +127,8 @@ async function loadGame(dir) {
   };
   addOption(blueSel, 'you', 'you + 2 AI teammates');
   addOption(redSel, 'you', 'you + 2 AI teammates');
+  blueSel.querySelector('option[value="you"]').dataset.human = '1';
+  redSel.querySelector('option[value="you"]').dataset.human = '1';
 
   for (const entry of state.entry.brains) {
     let label = entry.label;
@@ -150,9 +152,11 @@ async function loadGame(dir) {
 
   const champ = state.entry.brains.find((b) => b.file === 'champion.s1b');
   state.brainKey = champ ? champ.label : state.entry.brains[0].label;
-  blueSel.value = 'you';
-  redSel.value = state.brainKey;
-  blueSel.onchange = () => restart();
+  state.side = $('side-select').value;
+  syncSideOptions();
+  blueSel.value = state.side === 'blue' ? 'you' : state.brainKey;
+  redSel.value = state.side === 'red' ? 'you' : state.brainKey;
+  blueSel.onchange = () => { syncSideOptions(); restart(); };
   redSel.onchange = () => restart();
   renderSpec();
   renderLadder();
@@ -274,15 +278,36 @@ function humanizerRef(level, seed) {
   if (!hzCache.has(key)) hzCache.set(key, humanizerFactory(level, seed));
   return hzCache.get(key);
 }
+// Only the side you are playing can be set to "you". Letting both sides be
+// human gave the player all six units, which reads as the AI ignoring you.
+function syncSideOptions() {
+  const you = $('side-select').value;
+  for (const [sel, side] of [[$('blue-ctl'), 'blue'], [$('red-ctl'), 'red']]) {
+    const opt = sel.querySelector('option[data-human]');
+    if (!opt) continue;
+    if (side === you) opt.removeAttribute('disabled');
+    else {
+      opt.setAttribute('disabled', 'disabled');
+      if (sel.value === 'you') sel.value = state.brainKey;
+    }
+  }
+}
+
 function sideController(value) {
-  const mateCtl = value === 'you' ? teamController(state.brainKey) : teamController(value);
-  if (value !== 'you') return mateCtl;
-  const human = humanController();
-  return function (unit) {
-    const r = mateCtl.call(this, unit);
-    unit.isHuman = false;
-    return unit.idx === 0 ? human.call(this, unit) : r;
-  };
+  // Refuse a human on the wrong side even if the option is somehow selected.
+  if (value === 'you') {
+    if (state.side === 'blue' && $('blue-ctl').value === 'you') {
+      const mateCtl = teamController(state.brainKey);
+      const human = humanController();
+      return function (unit) {
+        const r = mateCtl.call(this, unit);
+        unit.isHuman = false;
+        return unit.idx === 0 ? human.call(this, unit) : r;
+      };
+    }
+    return teamController(value);
+  }
+  return teamController(value);
 }
 
 // ---------------------------------------------------------------------------
@@ -305,6 +330,8 @@ function restart() {
   state.selected = state.match.arena.units.find((u) => u.team === side)?.id ?? 0;
   state.lastResult = null;
   $('overlay').classList.add('hidden');
+  $('status').textContent = 'ready';
+  $('status').className = 'status';
   renderLegend();
 }
 
@@ -402,13 +429,16 @@ function draw() {
 }
 
 function drawDecor() {
-  for (const d of DECOR) {
-    drawSprite(d.s, d.x, d.y, d.scale, d.r, 'rgba(120,150,190,0.25)');
-  }
+  // Decoration is drawn first, dimmed, and small. It is there to give the eye
+  // depth, not to compete with the playfield.
+  g.save();
+  g.globalAlpha = 0.42;
+  for (const d of DECOR) drawSprite(d.s, d.x, d.y, d.scale, d.r);
+  g.restore();
   for (const n of NODES) {
-    g.fillStyle = 'rgba(255,255,255,0.045)';
+    g.fillStyle = 'rgba(255,255,255,0.05)';
     g.beginPath();
-    g.arc(n.x, n.y, 2.2, 0, Math.PI * 2);
+    g.arc(n.x, n.y, 1.8, 0, Math.PI * 2);
     g.fill();
   }
 }
@@ -439,19 +469,29 @@ function drawBases() {
 
 const WALL_SPRITES = ['block_a', 'wall_a', 'block_b', 'wall_c', 'block_c', 'wall_d'];
 
+// A wall must look exactly as big as it behaves. The station sprites are
+// authored at wildly different sizes, so each one is drawn *clipped* to its
+// collision rect: scale to cover, clip, and lay a solid tint on top. Scaling to
+// fit instead lets a sprite overflow its own hitbox, which is how the map ends
+// up looking like cover where there is none.
 function drawWalls() {
   WALLS.forEach((w, i) => {
-    const name = WALL_SPRITES[i % WALL_SPRITES.length];
-    const img = sprite(name);
-    const sw = img ? img.naturalWidth : 40;
-    const sh = img ? img.naturalHeight : 40;
-    const s = Math.max(w.w / sw, w.h / sh) * 1.15;
-    drawSprite(name, w.x + w.w / 2, w.y + w.h / 2, s, 0, 'rgba(140,165,200,0.35)');
-    // Solid silhouette so cover reads at a glance even at small zoom.
-    g.fillStyle = 'rgba(10,14,20,0.55)';
+    const cx = w.x + w.w / 2;
+    const cy = w.y + w.h / 2;
+    g.save();
+    g.beginPath();
+    g.rect(w.x, w.y, w.w, w.h);
+    g.clip();
+    g.fillStyle = '#141b25';
     g.fillRect(w.x, w.y, w.w, w.h);
-    g.strokeStyle = 'rgba(150,180,215,0.35)';
-    g.lineWidth = 1;
+    drawSprite(WALL_SPRITES[i % WALL_SPRITES.length], cx, cy,
+      Math.max(w.w, w.h) / 24, 0, 'rgba(120,150,190,0.5)');
+    g.globalCompositeOperation = 'source-atop';
+    g.fillStyle = 'rgba(12,18,26,0.62)';
+    g.fillRect(w.x, w.y, w.w, w.h);
+    g.restore();
+    g.strokeStyle = 'rgba(150,185,225,0.55)';
+    g.lineWidth = 1.2;
     g.strokeRect(w.x + 0.5, w.y + 0.5, w.w - 1, w.h - 1);
   });
 }
@@ -554,11 +594,14 @@ function drawBullets() {
 
 function drawUnits() {
   const a = state.match.arena;
+  const sel = a.units.find((u) => u.id === state.selected);
+  g.font = '9px ui-monospace, monospace';
+  g.textAlign = 'center';
   for (const u of a.units) {
     if (!u.alive) {
       g.save();
-      g.globalAlpha = 0.25;
-      drawSprite('explosion', u.x, u.y, 0.6);
+      g.globalAlpha = 0.22;
+      drawSprite('explosion', u.x, u.y, 0.35);
       g.restore();
       continue;
     }
@@ -566,47 +609,59 @@ function drawUnits() {
     const arch = mirroredSlot(u);
     const shipName = arch === 2 ? 'ship_sniper' : arch === 1 ? 'ship_support' : 'ship_entry';
 
-    // shield bubble
-    if (u.shield > 0) drawSprite('shield', u.x, u.y, 1.1, 0, 'rgba(126,231,135,0.5)');
+    if (u.shield > 0) drawSprite('shield', u.x, u.y, 0.55, 0, 'rgba(126,231,135,0.45)');
 
     g.save();
     g.translate(u.x, u.y);
     g.rotate(u.aimAngle + Math.PI / 2);
-    drawSprite('exhaust', -10, 0, 0.8, Math.PI);
-    drawSprite(shipName, 0, 0, 0.62, 0, t.deep);
+    drawSprite('exhaust', -7, 0, 0.3, Math.PI);
+    // 0.3 puts a ship at roughly 30px across, which is about three body widths.
+    // Bigger than that and the sprites overlap into an unreadable pile.
+    drawSprite(shipName, 0, 0, 0.3, 0, t.deep);
     g.restore();
 
-    // context ring: which mood the gate picked
-    g.strokeStyle = CONTEXT_COLORS[u.ctx] ?? '#555';
-    g.lineWidth = 2.5;
+    // Team dot: the fastest read of who is who, independent of the sprite.
+    g.fillStyle = t.line;
     g.beginPath();
-    g.arc(u.x, u.y, 13, -Math.PI / 2, -Math.PI / 2 + Math.PI * 2 * Math.max(0, u.hp) / 100);
+    g.arc(u.x - 11, u.y - 9, 2.6, 0, Math.PI * 2);
+    g.fill();
+
+    // context ring doubles as the health arc
+    g.strokeStyle = CONTEXT_COLORS[u.ctx] ?? '#555';
+    g.lineWidth = 2.2;
+    g.beginPath();
+    g.arc(u.x, u.y, 12, -Math.PI / 2, -Math.PI / 2 + Math.PI * 2 * Math.max(0, u.hp) / 100);
     g.stroke();
 
     if (u.id === state.selected) {
       g.strokeStyle = '#ffffff';
-      g.lineWidth = 1.6;
+      g.lineWidth = 1.5;
+      g.setLineDash([4, 3]);
       g.beginPath();
-      g.arc(u.x, u.y, 17, 0, Math.PI * 2);
+      g.arc(u.x, u.y, 15, 0, Math.PI * 2);
       g.stroke();
+      g.setLineDash([]);
     }
     if (u.carrying) {
       g.fillStyle = t.glow;
       g.beginPath();
-      g.arc(u.x, u.y - 20, 3.4, 0, Math.PI * 2);
+      g.arc(u.x, u.y - 19, 3.2, 0, Math.PI * 2);
       g.fill();
     }
 
-    g.font = '9px ui-monospace, monospace';
-    g.textAlign = 'center';
-    g.fillStyle = t.glow;
-    g.fillText((ACTIONS[u.lastAction] ?? '?').slice(0, 4), u.x, u.y + 25);
-    if (u.reloading > 0) {
-      g.fillStyle = '#ffd166';
-      g.fillText('RLD', u.x, u.y + 35);
+    // Labels only where they can be read: the unit you drive, and anything close
+    // enough that the text has room. Six stacks of overlapping intent labels
+    // are worse than no labels.
+    const near = sel && u.id !== sel.id && Math.hypot(u.x - sel.x, u.y - sel.y) < 110;
+    if (u.id === state.selected || near) {
+      g.fillStyle = t.glow;
+      g.fillText((ACTIONS[u.lastAction] ?? '?').slice(0, 4), u.x, u.y + 23);
+      if (u.reloading > 0) {
+        g.fillStyle = '#ffd166';
+        g.fillText('RLD', u.x, u.y + 32);
+      }
     }
   }
-  void a;
 }
 
 function drawFx() {
@@ -725,14 +780,15 @@ function renderXray(unit) {
   const pos = (v) => Math.max(0, Math.min(100, ((v + 1) / 2) * 100));
   const band = (from, to, color, label) => {
     const l = pos(from), r = pos(to);
+    if (r - l < 9) return '';
     return `<div class="line" style="left:${l}%;width:${Math.max(0, r - l)}%;background:${color};opacity:.5"></div>
       <div class="mark" style="left:${(l + r) / 2}%">${label}</div>`;
   };
   const bands = brain.gated
     ? band(-1, th[2], CONTEXT_COLORS[3], 'save')
-      + band(th[2], th[0], CONTEXT_COLORS[2], 'hold / default')
+      + band(th[2], th[0], CONTEXT_COLORS[2], 'hold')
       + band(th[0], 1, CONTEXT_COLORS[0], 'execute')
-      + `<div class="mark" style="left:${pos(p)}%;color:#fff">&#9679; you</div>`
+      + `<div class="mark" style="left:${pos(p)}%;color:#fff">&#9679;</div>`
     : '<div class="mark">this brain has no gate</div>';
 
   const flagBits = [];
@@ -873,7 +929,13 @@ function installInput() {
   };
   $('humanize-out').textContent = 'superhuman';
 
-  $('side-select').onchange = () => { state.side = $('side-select').value; restart(); };
+  $('side-select').onchange = () => {
+    state.side = $('side-select').value;
+    syncSideOptions();
+    $('blue-ctl').value = state.side === 'blue' ? 'you' : state.brainKey;
+    $('red-ctl').value = state.side === 'red' ? 'you' : state.brainKey;
+    restart();
+  };
   $('btn-pause').onclick = () => {
     state.paused = !state.paused;
     $('btn-pause').textContent = state.paused ? 'Resume' : 'Pause';

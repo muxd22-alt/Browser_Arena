@@ -198,7 +198,7 @@ export function decide(b, f, arch, ctx) {
   const nA = b.nA, nF = b.nF;
   let best = -1;
   let bestScore = -Infinity;
-  const biasScale = b.scale[0];
+  const biasScale = b.biasScale;
   const abase = arch * nA;
   for (let a = 0; a < nA; a++) {
     let s = b.archBias[abase + a] * biasScale;
@@ -211,7 +211,7 @@ export function decide(b, f, arch, ctx) {
 
 export function scoreAll(b, f, arch, ctx) {
   const out = new Float32Array(b.nA);
-  const biasScale = b.scale[0];
+  const biasScale = b.biasScale;
   const abase = arch * b.nA;
   for (let a = 0; a < b.nA; a++) {
     let s = b.archBias[abase + a] * biasScale;
@@ -230,7 +230,7 @@ export function explain(b, f, arch, ctx, featureNames = []) {
   const scores = scoreAll(b, f, arch, ctx);
   let best = 0;
   for (let a = 1; a < nA; a++) if (scores[a] > scores[best]) best = a;
-  const biasScale = b.scale[0];
+  const biasScale = b.biasScale;
   const terms = [];
   let total = b.archBias[arch * nA + best] * biasScale;
   for (let i = 0; i < nF; i++) {

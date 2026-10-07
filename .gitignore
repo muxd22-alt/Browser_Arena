@@ -14,11 +14,4 @@ games/*/data/
 assets/kenney_space-kit/
 assets/kenney_space-shooter-extension/
 
-# Keep the line endings the repo was authored with. Git's default on Windows
-# would rewrite every file to CRLF on checkout, which churns diffs for no gain.
-* text=auto eol=lf
-
 # Binary assets and brains: never let line-ending translation touch them.
-assets/sprites/** binary
-games/**/*.s1b binary
-games/**/*.s1d binary
