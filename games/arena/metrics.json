@@ -1,16 +1,17 @@
 {
   "game": "arena",
-  "generated_at": "2026-10-07T10:19:10.464Z",
+  "generated_at": "2026-10-07T17:27:37.658Z",
   "champion_bytes": 493,
   "budget_bytes": 1024,
   "promoted": false,
   "promotion": {
     "promote": false,
     "reasons": [
-      "Wilson lower bound 0.000 below 0.55",
-      "win rate 0.000 not above 0.5"
+      "Wilson lower bound 0.346 below 0.55",
+      "win rate 0.467 not above 0.5",
+      "regressed vs scripted by 0.296 (> 0.05)"
     ],
-    "regress": 0
+    "regress": 0.2962962962962963
   },
   "imitation": {
     "accuracy": 0.8603174603174604,
@@ -24,107 +25,107 @@
   "series": {
     "vs_champion": {
       "matches": 60,
-      "wins": 0,
-      "losses": 0,
-      "draws": 60,
-      "win_rate": 0,
+      "wins": 28,
+      "losses": 32,
+      "draws": 0,
+      "win_rate": 0.467,
       "ci": [
-        0,
-        1
+        0.346,
+        0.591
       ]
     },
     "vs_scripted": {
       "matches": 30,
-      "wins": 17,
-      "losses": 13,
-      "draws": 0,
-      "win_rate": 0.567,
+      "wins": 18,
+      "losses": 9,
+      "draws": 3,
+      "win_rate": 0.667,
       "ci": [
-        0.392,
-        0.726
+        0.478,
+        0.814
       ]
     },
     "champion_vs_scripted": {
       "matches": 30,
-      "wins": 17,
-      "losses": 13,
-      "draws": 0,
-      "win_rate": 0.567,
+      "wins": 26,
+      "losses": 1,
+      "draws": 3,
+      "win_rate": 0.963,
       "ci": [
-        0.392,
-        0.726
+        0.817,
+        0.993
       ]
     },
     "vs_random": {
       "matches": 16,
-      "wins": 16,
-      "losses": 0,
+      "wins": 14,
+      "losses": 2,
       "draws": 0,
-      "win_rate": 1,
+      "win_rate": 0.875,
       "ci": [
-        0.806,
-        1
+        0.64,
+        0.965
       ]
     },
     "vs_humanized": {
       "matches": 16,
-      "wins": 12,
-      "losses": 3,
-      "draws": 1,
-      "win_rate": 0.8,
+      "wins": 8,
+      "losses": 5,
+      "draws": 3,
+      "win_rate": 0.615,
       "ci": [
-        0.548,
-        0.93
+        0.355,
+        0.823
       ]
     }
   },
   "ladder": {
-    "champion": 1201,
-    "candidate": 1130,
-    "scripted": 1038,
-    "imitated": 893,
-    "random": 738
+    "champion": 1149,
+    "candidate": 1096,
+    "scripted": 1051,
+    "imitated": 957,
+    "random": 747
   },
   "difficulty_curve": [
     {
       "level": 0,
-      "winRate": 0.583,
-      "lo": 0.388,
-      "hi": 0.755
+      "winRate": 0.955,
+      "lo": 0.782,
+      "hi": 0.992
     },
     {
       "level": 0.25,
-      "winRate": 0.85,
-      "lo": 0.64,
-      "hi": 0.948
+      "winRate": 0.778,
+      "lo": 0.548,
+      "hi": 0.91
     },
     {
       "level": 0.5,
-      "winRate": 1,
-      "lo": 0.824,
-      "hi": 1
+      "winRate": 0.778,
+      "lo": 0.548,
+      "hi": 0.91
     },
     {
       "level": 0.75,
-      "winRate": 0.706,
-      "lo": 0.469,
-      "hi": 0.867
+      "winRate": 0.824,
+      "lo": 0.59,
+      "hi": 0.938
     },
     {
       "level": 1,
-      "winRate": 0.737,
-      "lo": 0.512,
-      "hi": 0.882
+      "winRate": 0.667,
+      "lo": 0.437,
+      "hi": 0.837
     }
   ],
   "generations": [
     {
       "gen": 0,
-      "best": 1.06
+      "best": 1.04
     },
     {
       "gen": 1,
-      "best": 1.06
+      "best": 1.05
     },
     {
       "gen": 2,
@@ -184,6 +185,38 @@
     },
     {
       "gen": 16,
+      "best": 1.06
+    },
+    {
+      "gen": 17,
+      "best": 1.06
+    },
+    {
+      "gen": 18,
+      "best": 1.06
+    },
+    {
+      "gen": 19,
+      "best": 1.06
+    },
+    {
+      "gen": 20,
+      "best": 1.06
+    },
+    {
+      "gen": 21,
+      "best": 1.06
+    },
+    {
+      "gen": 22,
+      "best": 1.06
+    },
+    {
+      "gen": 23,
+      "best": 1.06
+    },
+    {
+      "gen": 24,
       "best": 1.06
     }
   ]
